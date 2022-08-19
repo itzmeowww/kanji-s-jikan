@@ -95,7 +95,7 @@ const Main: NextPage = () => {
   return (
     <div className="flex w-screen min-h-screen flex-col items-center justify-center pt-5">
       <Head>
-        <title>Word Chain</title>
+        <title>Kanji's jikan</title>
         {/* <link rel="icon" href="/favicon.ico" /> */}
       </Head>
 
