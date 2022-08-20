@@ -93,13 +93,13 @@ const Main: NextPage = () => {
 
   }
   return (
-    <div className="flex w-screen min-h-screen flex-col items-center justify-center pt-5">
+    <div className="flex w-screen min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-500 to-green-300">
       <Head>
         <title>Kanji's jikan</title>
         {/* <link rel="icon" href="/favicon.ico" /> */}
       </Head>
 
-      <main className="flex w-full min-h-screen pb-48 pt-5 flex-col items-center justify-center px-4 text-center gap-10">
+      <main className="flex w-full min-h-screen pb-48 pt-5 flex-col items-center justify-center px-4 text-center gap-10 shadow-md">
         <table className='table-auto w-full border'>
           {/* <thead>
             <tr>
@@ -109,7 +109,7 @@ const Main: NextPage = () => {
           </thead> */}
           <tbody className='border'>
             {words.map((word: String, idx: number) => {
-              return <tr>
+              return <tr className='bg-white'>
                 <td className='border w-1/3'>{`${word}`} </td>
                 <td className='border w-1/3 overflow-scroll'><span>{info[idx].reading}</span></td>
                 <td className='border w-1/3 overflow-scroll'><span>{info[idx].meaning}</span></td>
