@@ -54,14 +54,14 @@ const Main: NextPage = () => {
     setIsLoading(true)
     let valid = true
     event.preventDefault();
+
+    if (currentWord.length == 1) valid = false
     if (words.length > 0) {
       const lastWord = words[words.length - 1]
       if (lastWord[lastWord.length - 1] != currentWord[0]) valid = false
       if (words.lastIndexOf(currentWord) != -1) valid = false
-      if (currentWord.length == 1) valid = false
+
       if (!isKanji(currentWord)) valid = false
-
-
     }
     let isOkay = false;
     let meaning: string | null = null;
