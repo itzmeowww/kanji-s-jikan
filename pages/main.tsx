@@ -1,25 +1,26 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import { useState, ChangeEvent, useEffect, FormEvent } from 'react'
+import { useState, ChangeEvent, FormEvent } from 'react'
 import { isKanji } from '../utils/isKanji'
 const Main: NextPage = () => {
   const [words, setWords] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [info, setInfo] = useState<{ meaning: string | null; reading: string | null }[]>([])
+  const [info, setInfo] = useState<{ meaning: string | null; reading: string | null; byFinding: boolean }[]>([])
   const [currentWord, setCurrentWord] = useState<string>("")
-  const [isError, setIsError] = useState<boolean>(false)
+  const [isError, setIsError] = useState<string | null>(null)
   const [isNotFound, setIsNotFound] = useState(false)
 
   // const [players, setPlayers] = useState<>()
 
-  useEffect(() => {
-    if (isError) {
-      setTimeout(() => { setIsError(false) }, 1000)
-    }
-  }, [isError])
+  // useEffect(() => {
+  //   if (isError) {
+  //     setTimeout(() => { setIsError(null) }, 5000)
+  //   }
+  // }, [isError])
 
   const handleTyping = (x: ChangeEvent<HTMLInputElement>): void => {
     setCurrentWord(x.target.value)
+    if (isError != null) setIsError(null)
   }
 
   const handleFind = () => {
@@ -35,13 +36,13 @@ const Main: NextPage = () => {
       meaning = res.meaning
       reading = res.reading
       kanji = res.kanji
-      console.log(res)
+
       if (isOkay && meaning != null && kanji) {
 
         setWords([...words, kanji]);
-        setInfo([...info, { meaning: meaning, reading: reading }]);
+        setInfo([...info, { meaning: meaning, reading: reading, byFinding: true }]);
         setIsLoading(false)
-        // setCurrentWord("")
+        setCurrentWord(kanji[kanji.length - 1])
       }
       else {
         setIsNotFound(true)
@@ -53,42 +54,58 @@ const Main: NextPage = () => {
   const handleSubmit = (event: FormEvent) => {
     setIsLoading(true)
     let valid = true
+    let reason = null
     event.preventDefault();
 
-    if (currentWord.length == 1) valid = false
-    if (words.length > 0) {
-      const lastWord = words[words.length - 1]
-      if (lastWord[lastWord.length - 1] != currentWord[0]) valid = false
-      if (words.lastIndexOf(currentWord) != -1) valid = false
 
-      if (!isKanji(currentWord)) valid = false
+    if (!isKanji(currentWord)) {
+      valid = false
+      reason = "The word must consist of kanji only"
     }
+    else if (currentWord.length <= 1) {
+      valid = false
+      reason = "The kanji must consist of more than 1 letter"
+    }
+
+    if (valid && words.length > 0) {
+      const lastWord = words[words.length - 1]
+      if (lastWord[lastWord.length - 1] != currentWord[0]) {
+        valid = false
+        reason = "The last letter of the last kanji and the first letter of current kanji does not match"
+      }
+      if (words.lastIndexOf(currentWord) != -1) {
+        valid = false
+        reason = "This kanji is already used"
+      }
+    }
+
     let isOkay = false;
     let meaning: string | null = null;
     let reading: string | null = null;
-    if (valid && isKanji(currentWord)) {
-      console.log(`checking ${currentWord}`)
+
+    if (valid) {
       fetch(`/api/check?word=${currentWord}`).then((res) => res.json()).then((res) => {
         isOkay = res.OK
         meaning = res.meaning
         reading = res.reading
-        console.log(res)
+
         if (isOkay && meaning != null) {
-          console.log(words, currentWord)
           setWords([...words, currentWord]);
-          setInfo([...info, { meaning: meaning[0], reading: reading }]);
+          setInfo([...info, { meaning: meaning[0], reading: reading, byFinding: false }]);
           setIsLoading(false)
-          setCurrentWord("")
+          setCurrentWord(currentWord[currentWord.length - 1])
         }
+
         else {
+          reason = "Cannot find this kanji"
           setIsLoading(false)
-          setIsError(true)
+          setIsError(reason)
         }
       })
     }
     else {
       setIsLoading(false)
-      setIsError(true)
+      setIsError(reason)
     }
 
   }
@@ -99,35 +116,45 @@ const Main: NextPage = () => {
         {/* <link rel="icon" href="/favicon.ico" /> */}
       </Head>
 
-      <main className="flex w-full min-h-screen pb-48 pt-5 flex-col items-center justify-center px-4 text-center gap-10 shadow-md">
-        <table className='table-auto w-full border'>
+      <main className="relative flex max-w-lg w-full min-h-screen pb-40 pt-10 flex-col items-center justify-center px-4 text-center gap-10">
+        {/* <div className='absolute top-3 right-3 bg-white px-2 rounded shadow-md text-sm w-18 text-center'>Hide Meaning</div> */}
+        <div className='flex flex-col w-full shadow-lg rounded-lg overflow-hidden'>
           {/* <thead>
             <tr>
               <th>感じ</th>
               <th>意味</th>
             </tr>
           </thead> */}
-          <tbody className='border'>
-            {words.map((word: String, idx: number) => {
-              return <tr className='bg-white'>
-                <td className='border w-1/3'>{`${word}`} </td>
-                <td className='border w-1/3 overflow-scroll'><span>{info[idx].reading}</span></td>
-                <td className='border w-1/3 overflow-scroll'><span>{info[idx].meaning}</span></td>
-              </tr>
-            })}
-          </tbody>
-        </table>
+
+          {words.map((word: String, idx: number) => {
+            return <div className={`bg-white flex justify-center h-full items-center w-full  ${idx != words.length - 1 && 'border-b'} pr-2`}>
+
+              <div className={`border-r-2 ${idx == 0 && 'rounded-tl-md'} ${idx == words.length - 1 && 'rounded-bl-md'} text-sm ${info[idx].byFinding ? 'bg-red-400 border-red-500' : 'bg-blue-600 border-blue-700 '} text-white w-6 h-8 text-center align-middle flex items-center justify-center relative`}>
+                <span className=''>{idx + 1}</span>
+              </div>
+              <div className='border-r w-1/4 my-1whitespace-nowrap overflow-x-scroll'>{word} </div>
+              <div className='border-r w-1/4 my-1 whitespace-nowrap overflow-x-scroll'>{info[idx].reading}</div>
+              <div className='w-1/2 my-1 whitespace-nowrap overflow-x-scroll px-2' >{info[idx].meaning}</div>
+            </div>
+          })}
+
+        </div>
       </main>
 
-      <div className='bg-white flex flex-col h-32 border-t w-full fixed bottom-0 gap-5 items-center justify-center'>
-        {isLoading && <span>Checking</span>}
-        {isError && <span className='text-red-500'>The kanji is not valid</span>}
-        {isNotFound && <span className='text-red-500'>The kanji cannot be found</span>}
+      <div className=' bg-white flex flex-col h-32 border-t w-full fixed bottom-0 pt-2 items-center justify-center'>
+        {/* <div className='absolute right-0 -top-6 rounded-t-md shadow-inner  bg-white px-2 h-6 border-2 pb-1 text-sm'>⚙️</div> */}
+        <div className='text-sm top-2 h-10 absolute flex flex-col justify-center items-center w-full'>
+          {isLoading && <span className=''>Checking</span>}
+          {isError != null && <span className='text-red-500 w-4/5 text-center'>{isError}</span>}
+          {isNotFound && <span className='text-red-500'>The kanji cannot be found</span>}
+        </div>
+
 
         <form className='gap-1 flex' onSubmit={handleSubmit}>
-          <input type="text" className={`border rounded-md pl-2 ${isError ? 'border-red-500' : 'border-black'}`} value={currentWord.toString()} onChange={handleTyping} />
-          <button disabled={isLoading} type='submit' className={` rounded-md border px-4 border-black`} onClick={handleSubmit}>Enter</button>
           {words.length > 0 && <button disabled={isLoading} type='button' className='rounded-md border px-4 border-black' onClick={handleFind}>Find</button>}
+          <input type="text" placeholder={words.length > 0 ? words.slice(-1)[0].slice(-1) : 'Type kanji here'} className={`border rounded-md pl-2 ${isError ? 'border-red-500' : 'border-black'}`} value={currentWord.toString()} onChange={handleTyping} />
+          <button disabled={isLoading} type='submit' className={` rounded-md border px-4 border-black`} onClick={handleSubmit}>Enter</button>
+
         </form>
       </div>
 
