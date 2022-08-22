@@ -30,8 +30,10 @@ const Main: NextPage = () => {
     let reading: string | null = null;
     let kanji: string | null = null;
     const param = words.length == 0 ? '' : words[words.length - 1]
-    console.log(param)
-    fetch(`/api/find?word=${param}`).then((res) => res.json()).then((res) => {
+
+    const usedKanji = words.length == 0 ? '' : words.join(",")
+
+    fetch(`/api/find?word=${param}&used=${usedKanji}`).then((res) => res.json()).then((res) => {
       isOkay = res.OK
       meaning = res.meaning
       reading = res.reading
@@ -52,6 +54,7 @@ const Main: NextPage = () => {
   }
 
   const handleSubmit = (event: FormEvent) => {
+
     setIsLoading(true)
     let valid = true
     let reason = null
@@ -118,7 +121,7 @@ const Main: NextPage = () => {
 
       <main className="relative flex max-w-lg w-full min-h-screen pb-40 pt-10 flex-col items-center justify-center px-4 text-center gap-10">
         {/* <div className='absolute top-3 right-3 bg-white px-2 rounded shadow-md text-sm w-18 text-center'>Hide Meaning</div> */}
-        <div className='flex flex-col w-full shadow-lg rounded-lg overflow-hidden'>
+        <div className='flex flex-col w-full shadow-lg rounded-md overflow-hidden'>
           {/* <thead>
             <tr>
               <th>感じ</th>
@@ -132,13 +135,16 @@ const Main: NextPage = () => {
               <div className={`border-r-2 ${idx == 0 && 'rounded-tl-md'} ${idx == words.length - 1 && 'rounded-bl-md'} text-sm ${info[idx].byFinding ? 'bg-red-400 border-red-500' : 'bg-blue-600 border-blue-700 '} text-white w-6 h-8 text-center align-middle flex items-center justify-center relative`}>
                 <span className=''>{idx + 1}</span>
               </div>
-              <div className='border-r w-1/4 my-1whitespace-nowrap overflow-x-scroll'>{word} </div>
+              <div className='border-r w-1/4 my-1 whitespace-nowrap overflow-x-scroll'>{word} </div>
               <div className='border-r w-1/4 my-1 whitespace-nowrap overflow-x-scroll'>{info[idx].reading}</div>
               <div className='w-1/2 my-1 whitespace-nowrap overflow-x-scroll px-2' >{info[idx].meaning}</div>
             </div>
           })}
 
+
+
         </div>
+        {words.length == 0 && <div className='text-white text-md font-bold'>Type Something To Begin ⬇️</div>}
       </main>
 
       <div className=' bg-white flex flex-col h-32 border-t w-full fixed bottom-0 pt-2 items-center justify-center'>

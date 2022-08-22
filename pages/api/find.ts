@@ -13,7 +13,9 @@ export default function handler(
   res: NextApiResponse<Data>
 ) {
   console.log("finding...");
-  const { word } = req.query;
+  const { word, used } = req.query;
+  const usedKanji = used ? used.toString().split(",") : [];
+  // console.log(usedKanji);
   const param = word ? word[word.length - 1] + "*" : "*";
   fetch(`https://jisho.org/api/v1/search/words?keyword=${param}`)
     .then((response) => response.json())
@@ -40,12 +42,12 @@ export default function handler(
           // kanji = element.slug.split("-")[0];
           // meaning = element.senses[0].english_definitions[0];
           // reading = element.japanese[0].reading;
-
-          choice.push({
-            kanji: element.slug.split("-")[0],
-            meaning: element.senses[0].english_definitions[0],
-            reading: element.japanese[0].reading,
-          });
+          if (usedKanji.indexOf(element.slug.split("-")[0]) == -1)
+            choice.push({
+              kanji: element.slug.split("-")[0],
+              meaning: element.senses[0].english_definitions[0],
+              reading: element.japanese[0].reading,
+            });
         }
       });
       if (choice.length != 0) {

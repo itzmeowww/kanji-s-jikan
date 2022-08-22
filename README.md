@@ -6,5 +6,4 @@
 
 # TODO
 
-- Find button may give the duplicate word.
 - Multiplayer: name, score, skip, etc
